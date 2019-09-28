@@ -1,8 +1,7 @@
-DOCKER_ACC=
-APP_NAME=
+DOCKER_ACC=talham7391
+APP_NAME=estimationserver
 
 IMAGE=${DOCKER_ACC}/${APP_NAME}:latest
-NGINX_IMAGE=${DOCKER_ACC}/${APP_NAME}-nginx:latest
 STACK_NAME=${APP_NAME}-stack
 
 
@@ -11,21 +10,18 @@ buildimages:
 
 	./gradlew shadowJar
 	docker build . -t ${IMAGE}
-	cd nginx; docker build . -t ${NGINX_IMAGE}
 
 
 .PHONY: pushimages
 pushimages:
 
 	docker push ${IMAGE}
-	docker push ${NGINX_IMAGE}
 
 
 .PHONY: start
 start: buildimages
 
-	docker run --rm -d --name ${APP_NAME} ${IMAGE}
-	docker run --rm -p 80:80 --link=${APP_NAME} ${NGINX_IMAGE}
+	docker run --rm -p 80:80 --name ${APP_NAME} ${IMAGE}
 
 
 .PHONY: stop
@@ -43,8 +39,7 @@ deploy: buildimages pushimages
 	--capabilities CAPABILITY_IAM \
 	--parameter-overrides \
 		ClusterName="${APP_NAME}-cluster" \
-		AppImage="${IMAGE}" \
-		NginxImage="${NGINX_IMAGE}"
+		AppImage="${IMAGE}"
 
 
 .PHONY: serveraddy

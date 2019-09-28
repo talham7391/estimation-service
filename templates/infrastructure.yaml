@@ -21,15 +21,6 @@ Parameters:
     Type: Number
     Default: 128
 
-  NginxImage:
-    Description: Name of the nginx image for the app
-    Type: String
-
-  NginxMemory:
-    Description: Memory allocated to nginx container
-    Type: Number
-    Default: 128
-
 
 Resources:
 
@@ -99,14 +90,10 @@ Resources:
         - Name: app
           Memory: !Ref AppMemory
           Image: !Ref AppImage
-        - Name: nginx
-          Memory: !Ref NginxMemory
-          Image: !Ref NginxImage
-          Links:
-            - app
           PortMappings:
             - ContainerPort: 80
               HostPort: 80
+
 
   AppService:
     Type: "AWS::ECS::Service"
