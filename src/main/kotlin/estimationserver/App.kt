@@ -1,4 +1,4 @@
-package example
+package estimationserver
 
 import io.ktor.application.Application
 import io.ktor.application.call
