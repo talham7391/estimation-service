@@ -1,7 +1,6 @@
 package estimationserver.party
 
 import kotlinx.coroutines.sync.Mutex
-import java.lang.Exception
 
 class Party (
 
@@ -88,6 +87,27 @@ class Party (
         mutex.unlock()
     }
 
+    suspend fun sendMessageToPlayer (player: Player, message: String) : Boolean {
+        vetPlayer(player)
+        mutex.lock()
+        val res = players[player]!!.send(message)
+        mutex.unlock()
+        return res
+    }
+
+    suspend fun broadcastMessage (message: String) {
+        mutex.lock()
+        players.values.forEach { it?.send(message) }
+        mutex.unlock()
+    }
+
+    suspend fun receiveMessageFromPlayer (player: Player, message: String) {
+        vetPlayer(player)
+        mutex.lock()
+        partyListeners.forEach { it.receivedMessageFromPlayer(player, message) }
+        mutex.unlock()
+    }
+
     suspend fun addPartyListener (listener: PartyListener) {
         mutex.lock()
         partyListeners.add(listener)
@@ -98,6 +118,22 @@ class Party (
         mutex.lock()
         partyListeners.remove(listener)
         mutex.unlock()
+    }
+
+    private suspend fun vetPlayer (player: Player) {
+        mutex.lock()
+        var exception: Exception? = null
+
+        if (player !in players) {
+            exception = PlayerNotInParty(player)
+        } else if (players[player] == null) {
+            exception = PlayerDisconnected(player)
+        }
+
+        mutex.unlock()
+        if (exception != null) {
+            throw exception
+        }
     }
 
 }
