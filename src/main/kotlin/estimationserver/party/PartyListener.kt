@@ -12,10 +12,10 @@ interface PartyListener {
 
 abstract class BasePartyListener : PartyListener {
 
-    override fun playerConnected(player: Player) {}
+    override fun playerConnected (player: Player) {}
 
-    override fun playerDisconnected(player: Player) {}
+    override fun playerDisconnected (player: Player) {}
 
-    override fun receivedMessageFromPlayer(player: Player, message: String) {}
+    override fun receivedMessageFromPlayer (player: Player, message: String) {}
 
 }
