@@ -137,3 +137,5 @@ class Party (
     }
 
 }
+
+suspend fun Party.isFull () = getPlayers().size == numPlayers

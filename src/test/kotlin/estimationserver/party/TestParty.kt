@@ -237,25 +237,6 @@ class TestParty {
     }
 }
 
-class MockMessenger : Messenger {
-
-    override fun send (message: String) : Boolean {
-        return true
-    }
-
-}
-
-class LastMessageSentMessenger : Messenger {
-
-    var lastMessageSent: String? = null
-
-    override fun send (message: String): Boolean {
-        lastMessageSent = message
-        return true
-    }
-
-}
-
 class LastMessageReceivedListener : BasePartyListener() {
 
     var lastMessageReceived: Pair<Player, String>? = null
