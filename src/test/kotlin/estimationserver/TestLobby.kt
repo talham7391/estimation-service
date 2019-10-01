@@ -14,7 +14,7 @@ import kotlin.test.assertNull
 
 class TestLobby {
 
-    @Test fun testLobbyRelaysConnectionsAndDisconnections () = runBlocking<Unit> {
+    @Test fun testLobbyRelaysConnectionsAndDisconnections () {
         val party = Party(3)
         val lobby = Lobby(party)
 
@@ -32,7 +32,7 @@ class TestLobby {
 
         val objectMapper = jacksonObjectMapper()
 
-        assertNotNull(retryUntilNotNull(200, 10) { m1.lastMessageSent })
+        assertNotNull(m1.lastMessageSent)
 
         var res = objectMapper.readValue<ConnectedPlayersResponse>(m1.lastMessageSent!!)
         assertEquals(res.players, setOf(p1))
@@ -42,8 +42,8 @@ class TestLobby {
 
         party.connectPlayer(p2, m2)
 
-        assertNotNull(retryUntilNotNull(200, 10) { m1.lastMessageSent })
-        assertNotNull(retryUntilNotNull(200, 10) { m2.lastMessageSent })
+        assertNotNull(m1.lastMessageSent)
+        assertNotNull(m2.lastMessageSent)
 
         res = objectMapper.readValue(m1.lastMessageSent!!)
         assertEquals(res.players, setOf(p1, p2))
@@ -56,13 +56,13 @@ class TestLobby {
 
         party.disconnectPlayer(p1)
 
-        assertNotNull(retryUntilNotNull(200, 10) { m2.lastMessageSent })
+        assertNotNull(m2.lastMessageSent)
         res = objectMapper.readValue(m2.lastMessageSent!!)
         assertEquals(res.players, setOf(p2))
         assertNull(m1.lastMessageSent)
     }
 
-    @Test fun testPlayerCannotSendReadyIfLobbyIsNotFull () = runBlocking<Unit> {
+    @Test fun testPlayerCannotSendReadyIfLobbyIsNotFull () {
         val party = Party(3)
         val lobby = Lobby(party)
 
@@ -79,7 +79,7 @@ class TestLobby {
 
         party.receiveMessageFromPlayer(p1, objectMapper.writeValueAsString(req))
 
-        assertNotNull(retryUntilNotNull(200, 10) { m1.lastMessageSent })
+        assertNotNull(m1.lastMessageSent)
         objectMapper.readValue<ErrorResponse>(m1.lastMessageSent!!)
 
         m1.lastMessageSent = null
@@ -87,35 +87,6 @@ class TestLobby {
         party.connectPlayer(p2, MockMessenger())
 
         party.receiveMessageFromPlayer(p1, objectMapper.writeValueAsString(req))
-
-        // test incomplete - should recieve input about next stage
-    }
-
-    @Test fun testLobbyDoesNotRelayConnectionsAfterPlayersAreReady () = runBlocking<Unit> {
-        val party = Party(2)
-        val lobby = Lobby(party)
-
-        party.addPartyListener(lobby)
-
-        val p1 = Player("Bob")
-        val m1 = LastMessageSentMessenger()
-        val p2 = Player("Joe")
-        val m2 = LastMessageSentMessenger()
-
-        party.connectPlayer(p1, m1)
-        party.connectPlayer(p2, m2)
-
-        val objectMapper = jacksonObjectMapper()
-        val req = PlayersReadyRequest(true)
-        party.receiveMessageFromPlayer(p2, objectMapper.writeValueAsString(req))
-
-        assertNotNull(retryUntilNotNull(200, 10) { m1.lastMessageSent })
-        assertNotNull(retryUntilNotNull(200, 10) { m2.lastMessageSent })
-
-        m1.lastMessageSent = null
-        m2.lastMessageSent = null
-
-        party.disconnectPlayer(p2)
 
         // test incomplete - should recieve input about next stage
     }

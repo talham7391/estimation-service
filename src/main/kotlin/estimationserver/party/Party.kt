@@ -1,23 +1,17 @@
 package estimationserver.party
 
-import kotlinx.coroutines.sync.Mutex
-
 class Party (
 
     val numPlayers: Int
 
 ) {
 
-    private val mutex = Mutex()
-
     private val players = mutableMapOf<Player, Messenger?>()
     private val partyListeners = mutableListOf<PartyListener>()
 
     private var rememberDisconnectedPlayers = false
 
-    suspend fun connectPlayer (player: Player, messenger: Messenger) {
-        mutex.lock()
-
+    fun connectPlayer (player: Player, messenger: Messenger) {
         var exception: Exception? = null
 
         if (player in players) {                    // allow player to reconnect
@@ -35,18 +29,13 @@ class Party (
         }
 
         if (exception != null) {
-            mutex.unlock()
             throw exception
         }
 
         partyListeners.forEach { it.playerConnected(player) }
-
-        mutex.unlock()
     }
 
-    suspend fun disconnectPlayer (player: Player) {
-        mutex.lock()
-
+    fun disconnectPlayer (player: Player) {
         if (rememberDisconnectedPlayers) {
             players[player] = null
         } else {
@@ -54,26 +43,17 @@ class Party (
         }
 
         partyListeners.forEach { it.playerDisconnected(player) }
-
-        mutex.unlock()
     }
 
-    suspend fun getPlayers () : Set<Player> {
-        mutex.lock()
-        val p = players.keys
-        mutex.unlock()
-        return p
+    fun getPlayers () : Set<Player> {
+        return players.keys
     }
 
-    suspend fun getRememberDisconnectedPlayers() : Boolean {
-        mutex.lock()
-        val x = rememberDisconnectedPlayers
-        mutex.unlock()
-        return x
+    fun getRememberDisconnectedPlayers() : Boolean {
+        return rememberDisconnectedPlayers
     }
 
-    suspend fun setRememberDisconnectedPlayers(x: Boolean) {
-        mutex.lock()
+    fun setRememberDisconnectedPlayers(x: Boolean) {
         rememberDisconnectedPlayers = x
 
         if (!rememberDisconnectedPlayers) {
@@ -83,45 +63,31 @@ class Party (
                 }
             }
         }
-
-        mutex.unlock()
     }
 
-    suspend fun sendMessageToPlayer (player: Player, message: String) : Boolean {
+    fun sendMessageToPlayer (player: Player, message: String) : Boolean {
         vetPlayer(player)
-        mutex.lock()
-        val res = players[player]!!.send(message)
-        mutex.unlock()
-        return res
+        return players[player]!!.send(message)
     }
 
-    suspend fun broadcastMessage (message: String) {
-        mutex.lock()
+    fun broadcastMessage (message: String) {
         players.values.forEach { it?.send(message) }
-        mutex.unlock()
     }
 
-    suspend fun receiveMessageFromPlayer (player: Player, message: String) {
+    fun receiveMessageFromPlayer (player: Player, message: String) {
         vetPlayer(player)
-        mutex.lock()
         partyListeners.forEach { it.receivedMessageFromPlayer(player, message) }
-        mutex.unlock()
     }
 
-    suspend fun addPartyListener (listener: PartyListener) {
-        mutex.lock()
+    fun addPartyListener (listener: PartyListener) {
         partyListeners.add(listener)
-        mutex.unlock()
     }
 
-    suspend fun removePartyListener (listener: PartyListener) {
-        mutex.lock()
+    fun removePartyListener (listener: PartyListener) {
         partyListeners.remove(listener)
-        mutex.unlock()
     }
 
-    private suspend fun vetPlayer (player: Player) {
-        mutex.lock()
+    private fun vetPlayer (player: Player) {
         var exception: Exception? = null
 
         if (player !in players) {
@@ -130,7 +96,6 @@ class Party (
             exception = PlayerDisconnected(player)
         }
 
-        mutex.unlock()
         if (exception != null) {
             throw exception
         }
@@ -138,4 +103,4 @@ class Party (
 
 }
 
-suspend fun Party.isFull () = getPlayers().size == numPlayers
+fun Party.isFull () = getPlayers().size == numPlayers

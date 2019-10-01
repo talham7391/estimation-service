@@ -1,6 +1,5 @@
 package estimationserver.party
 
-import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -8,7 +7,7 @@ import kotlin.test.assertNull
 
 class TestParty {
 
-    @Test fun testPlayersCanConnectAndDisconnect () = runBlocking<Unit> {
+    @Test fun testPlayersCanConnectAndDisconnect () {
         val player = Player("bob")
         val party = Party(4)
 
@@ -21,7 +20,7 @@ class TestParty {
         assert(party.getPlayers().isEmpty())
     }
 
-    @Test fun testPartyDoesNotAcceptMoreThanAllowedPlayers () = runBlocking<Unit> {
+    @Test fun testPartyDoesNotAcceptMoreThanAllowedPlayers () {
         // testing with parties of size 2 and 7
         for (numPlayers in listOf(2, 7)) {
             val party = Party(numPlayers)
@@ -40,7 +39,7 @@ class TestParty {
         }
     }
 
-    @Test fun testPartyRemembersDisconnectedPlayers () = runBlocking<Unit> {
+    @Test fun testPartyRemembersDisconnectedPlayers () {
         val party = Party(3)
         party.setRememberDisconnectedPlayers(true)
 
@@ -65,7 +64,7 @@ class TestParty {
         assertEquals(party.getPlayers(), setOf(p1, p2, p3))
     }
 
-    @Test fun testPartyForgetsDisconnectedPlayers () = runBlocking<Unit> {
+    @Test fun testPartyForgetsDisconnectedPlayers () {
         val party = Party(4)
         party.setRememberDisconnectedPlayers(true)
 
@@ -93,7 +92,7 @@ class TestParty {
         assertEquals(party.getPlayers(), setOf(p1, p2, p4))
     }
 
-    @Test fun testSameConnectionIdCannotBeUsedTwice () = runBlocking<Unit> {
+    @Test fun testSameConnectionIdCannotBeUsedTwice () {
         val party = Party(4)
 
         val p1 = Player("Bob")
@@ -108,7 +107,7 @@ class TestParty {
         }
     }
 
-    @Test fun testCanSendMessagesToPlayer () = runBlocking<Unit> {
+    @Test fun testCanSendMessagesToPlayer () {
         val p1 = Player("bob")
         val m1 = LastMessageSentMessenger()
 
@@ -133,7 +132,7 @@ class TestParty {
         assertEquals(m2.lastMessageSent, "first")
     }
 
-    @Test fun testCannotSendMessagesToPlayerNotInParty () = runBlocking<Unit> {
+    @Test fun testCannotSendMessagesToPlayerNotInParty () {
         val p1 = Player("bob")
         val p2 = Player("joe")
         val p3 = Player("jerry")
@@ -147,7 +146,7 @@ class TestParty {
         }
     }
 
-    @Test fun testCanBroadcastMessage () = runBlocking<Unit> {
+    @Test fun testCanBroadcastMessage () {
         val p1 = Player("bob")
         val m1 = LastMessageSentMessenger()
         val p2 = Player("joe")
@@ -167,7 +166,7 @@ class TestParty {
         assertEquals(m3.lastMessageSent, "broadcast")
     }
 
-    @Test fun testCanReceiveMessagesFromPlayer () = runBlocking<Unit> {
+    @Test fun testCanReceiveMessagesFromPlayer () {
         val p1 = Player("bob")
         val p2 = Player("joe")
         val listener = LastMessageReceivedListener()
@@ -185,7 +184,7 @@ class TestParty {
         assertEquals(listener.lastMessageReceived?.second, "bye")
     }
 
-    @Test fun testCannotReceiveMessagesFromPlayerNotInParty () = runBlocking<Unit> {
+    @Test fun testCannotReceiveMessagesFromPlayerNotInParty () {
         val p1 = Player("bob")
         val p2 = Player("joe")
         val listener = LastMessageReceivedListener()
@@ -199,7 +198,7 @@ class TestParty {
         assertNull(listener.lastMessageReceived)
     }
 
-    @Test fun testCannotReceiveMessagesFromDisconnectedPlayer () = runBlocking<Unit> {
+    @Test fun testCannotReceiveMessagesFromDisconnectedPlayer () {
         val p1 = Player("bob")
         val listener = LastMessageReceivedListener()
         val party = Party(1).also {
@@ -216,7 +215,7 @@ class TestParty {
         assertNull(listener.lastMessageReceived)
     }
 
-    @Test fun testCannotSendMessagesToDisconnectedPlayer () = runBlocking<Unit> {
+    @Test fun testCannotSendMessagesToDisconnectedPlayer () {
         val p1 = Player("bob")
         val m1 = LastMessageSentMessenger()
 
