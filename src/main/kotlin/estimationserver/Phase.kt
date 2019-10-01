@@ -5,7 +5,7 @@ import estimationserver.party.BasePartyListener
 import estimationserver.party.Party
 import estimationserver.party.Player
 
-abstract class Phase (
+open class Phase (
 
     val party: Party
 
