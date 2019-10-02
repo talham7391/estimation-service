@@ -3,12 +3,17 @@ package estimationserver
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import estimationserver.party.*
+import talham7391.estimation.Estimation
 
 class Lobby (
 
     party: Party
 
 ) : Phase(party) {
+
+    init {
+        party.addPartyListener(this)
+    }
 
     override fun receivedMessageFromPlayer(player: Player, message: String) {
         val objectMapper = jacksonObjectMapper()
@@ -24,10 +29,17 @@ class Lobby (
         if (request.ready) {
             if (party.isFull()) {
                 party.removePartyListener(this)
-
                 party.setRememberDisconnectedPlayers(true)
-                val preGameLobby = PreGameLobby(party)
-                party.addPartyListener(preGameLobby)
+
+                val players = party.getPlayers().map { EstimationPlayer(it) }
+                val estimation = Estimation(
+                    players[0],
+                    players[1],
+                    players[2],
+                    players[3]
+                )
+
+                PreGameLobby(estimation, party)
 
             } else {
                 val objectMapper = jacksonObjectMapper()

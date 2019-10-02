@@ -35,8 +35,7 @@ fun Application.main () {
                 val partyId = PartyManager.createParty()
                 val party = PartyManager.getParty(partyId)
 
-                val lobby = Lobby(party)
-                party.addPartyListener(lobby)
+                Lobby(party)
 
                 call.respond(PartyIdResponse(partyId))
             }

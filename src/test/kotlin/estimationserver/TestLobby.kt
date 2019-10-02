@@ -15,7 +15,7 @@ import kotlin.test.assertNull
 class TestLobby {
 
     @Test fun testPlayerCannotSendReadyIfLobbyIsNotFull () {
-        val party = Party(3)
+        val party = Party(4)
         val lobby = Lobby(party)
 
         party.addPartyListener(lobby)
@@ -23,6 +23,8 @@ class TestLobby {
         val p1 = Player("Bob")
         val m1 = LastMessageSentMessenger()
         val p2 = Player("Joe")
+        val p3 = Player("Marry")
+        val p4 = Player("Chrix")
 
         party.connectPlayer(p1, m1)
 
@@ -37,6 +39,8 @@ class TestLobby {
         m1.lastMessageSent = null
 
         party.connectPlayer(p2, MockMessenger())
+        party.connectPlayer(p3, MockMessenger())
+        party.connectPlayer(p4, MockMessenger())
 
         party.receiveMessageFromPlayer(p1, objectMapper.writeValueAsString(req))
 

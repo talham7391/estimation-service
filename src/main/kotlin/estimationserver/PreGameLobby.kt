@@ -4,22 +4,25 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import estimationserver.party.Party
 import estimationserver.party.Player
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
+import talham7391.estimation.Estimation
 
 class PreGameLobby (
+
+    val estimation: Estimation,
 
     party: Party
 
 ) : Phase(party) {
 
-    val mutex = Mutex()
+    init {
+        party.addPartyListener(this)
+    }
+
     val playersReady = mutableSetOf<Player>()
 
     override fun playerConnected(player: Player) {
         super.playerConnected(player)
-        GlobalScope.launch { sendPlayerCurrentState(player) }
+        sendPlayerCurrentState(player)
     }
 
     override fun receivedMessageFromPlayer(player: Player, message: String) {
@@ -32,12 +35,12 @@ class PreGameLobby (
 
                 "PLAYER_READY" -> {
                     val r = objectMapper.readValue<PlayerReadyRequest>(message)
-                    GlobalScope.launch { handlePlayerReadyRequest(player, r) }
+                    handlePlayerReadyRequest(player, r)
                 }
 
                 "START_GAME" -> {
                     val r = objectMapper.readValue<StartGameRequest>(message)
-                    GlobalScope.launch { handleStartGameRequest(player, r) }
+                    handleStartGameRequest(player, r)
                 }
 
             }
@@ -45,18 +48,18 @@ class PreGameLobby (
         } catch (e: Exception) {}
     }
 
-    private suspend fun handlePlayerReadyRequest (player: Player, request: PlayerReadyRequest) {
+    private fun handlePlayerReadyRequest (player: Player, request: PlayerReadyRequest) {
         if (request.ready) {
-            mutex.lock()
             playersReady.add(player)
-            mutex.unlock()
+
+            broadcastPreGameLobbyState {
+                applyPlayersReadyData()
+            }
         }
     }
 
-    private suspend fun handleStartGameRequest (player: Player, request: StartGameRequest) {
-        mutex.lock()
+    private fun handleStartGameRequest (player: Player, request: StartGameRequest) {
         val allPlayersReady = playersReady.size == party.numPlayers
-        mutex.unlock()
         if (allPlayersReady && request.start) {
             party.removePartyListener(this)
 
@@ -70,26 +73,49 @@ class PreGameLobby (
         }
     }
 
-    private suspend fun sendPlayerCurrentState (player: Player) {
-        val preGameLobbyState = PreGameLobbyState()
+    private fun sendPlayerCurrentState (player: Player) {
+        sendPreGameLobbyState(player) {
+            applyPlayersReadyData()
+            applyPlayerScoresData()
+        }
+    }
 
-        preGameLobbyState.readyStatus = getPlayersReadyData()
+    private fun sendPreGameLobbyState (player: Player, config: PreGameLobbyState.() -> Unit) {
+        val preGameLobbyState = PreGameLobbyState()
+        preGameLobbyState.apply { config() }
+
+        val objectMapper = jacksonObjectMapper()
+        party.sendMessageToPlayer(player, objectMapper.writeValueAsString(preGameLobbyState))
+    }
+
+    private fun broadcastPreGameLobbyState (config: PreGameLobbyState.() -> Unit) {
+        val preGameLobbyState = PreGameLobbyState()
+        preGameLobbyState.apply { config() }
 
         val objectMapper = jacksonObjectMapper()
         party.broadcastMessage(objectMapper.writeValueAsString(preGameLobbyState))
     }
 
-    private suspend fun getPlayersReadyData () : Set<PlayerReadyData> {
+    private fun PreGameLobbyState.applyPlayersReadyData () {
         val m = mutableMapOf<Player, Boolean>()
         party.getPlayers().forEach { m[it] = false }
 
-        mutex.lock()
         playersReady.forEach { m[it] = true }
-        mutex.unlock()
 
         val set = mutableSetOf<PlayerReadyData>()
         for ((k, v) in m) { set.add(PlayerReadyData(k, v)) }
-        return set
+
+        readyStatus = set
+    }
+
+    private fun PreGameLobbyState.applyPlayerScoresData () {
+        val s = mutableSetOf<PlayerScoreData>()
+        estimation.playerGroup.players.forEach {
+            val es = it as EstimationPlayer
+            s.add(PlayerScoreData(es.data, es.getScore()))
+        }
+
+        playerScores = s
     }
 
 }

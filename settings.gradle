@@ -8,3 +8,6 @@
  */
 
 rootProject.name = 'estimationserver'
+
+include ':Estimation'
+project(':Estimation').projectDir = new File(settingsDir, './external/estimation')

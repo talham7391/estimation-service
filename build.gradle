@@ -36,6 +36,8 @@ dependencies {
     implementation "io.ktor:ktor-websockets:$ktor_version"
     implementation "io.ktor:ktor-jackson:$ktor_version"
 
+    implementation project(':Estimation')
+
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.0-RC'
 
     // Use the Kotlin test library.

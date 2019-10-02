@@ -76,7 +76,8 @@ class Party (
 
     fun receiveMessageFromPlayer (player: Player, message: String) {
         vetPlayer(player)
-        partyListeners.forEach { it.receivedMessageFromPlayer(player, message) }
+        val listeners = partyListeners.toList()
+        listeners.forEach { it.receivedMessageFromPlayer(player, message) }
     }
 
     fun addPartyListener (listener: PartyListener) {
