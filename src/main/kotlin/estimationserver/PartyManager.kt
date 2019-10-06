@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import kotlin.random.Random
 
 object PartyManager {
@@ -23,8 +24,8 @@ object PartyManager {
         return res.await()
     }
 
-    suspend fun getParty (partyId: String) : Party {
-        val res = CompletableDeferred<Party>()
+    suspend fun getParty (partyId: String) : PartyWrapper {
+        val res = CompletableDeferred<PartyWrapper>()
         actor.send(GetParty(partyId, res))
         return res.await()
     }
@@ -33,7 +34,7 @@ object PartyManager {
         val channel = Channel<PartyManagerMessage>()
         launch {
 
-            val parties = mutableMapOf<String, Party>()
+            val parties = mutableMapOf<String, PartyWrapper>()
 
             for (message in channel) {
                 when (message) {
@@ -50,7 +51,7 @@ object PartyManager {
                         if (partyId == null) {
                             message.result.completeExceptionally(UnableToGeneratePartyId())
                         } else {
-                            parties[partyId] = Party(4)
+                            parties[partyId] = PartyWrapper(Party(4))
                             message.result.complete(partyId)
                         }
                     }
@@ -74,13 +75,22 @@ object PartyManager {
     }
 }
 
+
+data class PartyWrapper (
+
+    val party: Party,
+    val mutex: Mutex = Mutex()
+
+)
+
+
 sealed class PartyManagerMessage
 
 data class CreateParty (val result: CompletableDeferred<String>) : PartyManagerMessage()
 
 data class GetPartyIds (val result: CompletableDeferred<Set<String>>) : PartyManagerMessage()
 
-data class GetParty (val id: String, val result: CompletableDeferred<Party>) : PartyManagerMessage()
+data class GetParty (val id: String, val result: CompletableDeferred<PartyWrapper>) : PartyManagerMessage()
 
 
 class UnableToGeneratePartyId : Exception("Unable to generate party id.")

@@ -1,10 +1,15 @@
 package estimationserver
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import estimationserver.party.Player
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.ContentNegotiation
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.cio.websocket.readBytes
+import io.ktor.http.cio.websocket.send
 import io.ktor.jackson.jackson
 import io.ktor.response.respond
 import io.ktor.routing.get
@@ -13,6 +18,9 @@ import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.websocket.WebSockets
 import io.ktor.websocket.webSocket
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.onReceiveOrNull
+import kotlinx.coroutines.selects.select
 
 fun Application.main () {
     install(WebSockets)
@@ -33,24 +41,41 @@ fun Application.main () {
 
             post {
                 val partyId = PartyManager.createParty()
-                val party = PartyManager.getParty(partyId)
+                val partyWrapper = PartyManager.getParty(partyId)
 
-                Lobby(party)
+                Lobby(partyWrapper.party)
 
                 call.respond(PartyIdResponse(partyId))
             }
         }
 
-//        route("/connect/{partyId}") {
-//            webSocket {
-//                val partyId = call.parameters["partyId"]
-//                partyId ?: return@webSocket
-//
-//                val connectionId = incoming.receive().readBytes().toString(Charsets.UTF_8)
-//                val player = Player(connectionId)
-//
-//                val party = PartyManager.getParty(partyId)
-//            }
-//        }
+        route("/connect/{partyId}") {
+            webSocket {
+                val partyId = call.parameters["partyId"]
+                partyId ?: return@webSocket
+
+                val objectMapper = jacksonObjectMapper()
+                val connectionId = objectMapper.readValue<ConnectionIdRequest>(incoming.receive().readBytes())
+
+                val player = Player(connectionId.connectionId)
+                val messenger = PlayerMessenger(outgoing)
+
+                val partyWrapper = PartyManager.getParty(partyId)
+                partyWrapper.mutex.lock()
+                partyWrapper.party.connectPlayer(player, messenger)
+                partyWrapper.mutex.unlock()
+
+                for (message in incoming) {
+                    val m = String(message.readBytes())
+                    partyWrapper.mutex.lock()
+                    partyWrapper.party.receiveMessageFromPlayer(player, m)
+                    partyWrapper.mutex.unlock()
+                }
+
+                partyWrapper.mutex.lock()
+                partyWrapper.party.disconnectPlayer(player)
+                partyWrapper.mutex.unlock()
+            }
+        }
     }
 }
