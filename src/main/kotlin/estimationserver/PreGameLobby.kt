@@ -16,6 +16,7 @@ class PreGameLobby (
 
     init {
         party.addPartyListener(this)
+        party.getPlayers().forEach { sendPlayerCurrentState(it) }
     }
 
     val playersReady = mutableSetOf<Player>()
