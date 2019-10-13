@@ -6,7 +6,9 @@ data class PreGameLobbyState (
 
     var readyStatus: Set<PlayerReadyData>? = null,
 
-    var playerScores: Set<PlayerScoreData>? = null
+    var playerScores: Set<PlayerScoreData>? = null,
+
+    val type: String = "PRE_GAME_LOBBY_STATE"
 
 )
 

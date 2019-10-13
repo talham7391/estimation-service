@@ -61,20 +61,35 @@ fun Application.main () {
                 val messenger = PlayerMessenger(outgoing)
 
                 val partyWrapper = PartyManager.getParty(partyId)
-                partyWrapper.mutex.lock()
-                partyWrapper.party.connectPlayer(player, messenger)
-                partyWrapper.mutex.unlock()
-
-                for (message in incoming) {
-                    val m = String(message.readBytes())
+                try {
                     partyWrapper.mutex.lock()
-                    partyWrapper.party.receiveMessageFromPlayer(player, m)
+                    partyWrapper.party.connectPlayer(player, messenger)
+                } catch (e: Exception) {
+                    throw e
+                } finally {
                     partyWrapper.mutex.unlock()
                 }
 
-                partyWrapper.mutex.lock()
-                partyWrapper.party.disconnectPlayer(player)
-                partyWrapper.mutex.unlock()
+                for (message in incoming) {
+                    val m = String(message.readBytes())
+                    try {
+                        partyWrapper.mutex.lock()
+                        partyWrapper.party.receiveMessageFromPlayer(player, m)
+                    } catch (e: Exception) {
+                        throw e
+                    } finally {
+                        partyWrapper.mutex.unlock()
+                    }
+                }
+
+                try {
+                    partyWrapper.mutex.lock()
+                    partyWrapper.party.disconnectPlayer(player)
+                } catch (e: Exception) {
+                    throw e
+                } finally {
+                    partyWrapper.mutex.unlock()
+                }
             }
         }
     }

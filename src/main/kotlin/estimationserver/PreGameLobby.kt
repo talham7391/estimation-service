@@ -14,12 +14,12 @@ class PreGameLobby (
 
 ) : Phase(party) {
 
+    private val playersReady = mutableSetOf<Player>()
+
     init {
         party.addPartyListener(this)
         party.getPlayers().forEach { sendPlayerCurrentState(it) }
     }
-
-    val playersReady = mutableSetOf<Player>()
 
     override fun playerConnected(player: Player) {
         super.playerConnected(player)
@@ -83,7 +83,7 @@ class PreGameLobby (
 
     private fun sendPreGameLobbyState (player: Player, config: PreGameLobbyState.() -> Unit) {
         val preGameLobbyState = PreGameLobbyState()
-        preGameLobbyState.apply { config() }
+        preGameLobbyState.apply(config)
 
         val objectMapper = jacksonObjectMapper()
         party.sendMessageToPlayer(player, objectMapper.writeValueAsString(preGameLobbyState))
@@ -112,8 +112,10 @@ class PreGameLobby (
     private fun PreGameLobbyState.applyPlayerScoresData () {
         val s = mutableSetOf<PlayerScoreData>()
         estimation.playerGroup.players.forEach {
-            val es = it as EstimationPlayer
-            s.add(PlayerScoreData(es.data, es.getScore()))
+            val es = it as? EstimationPlayer
+            if (es != null) {
+                s.add(PlayerScoreData(es.data, es.getScore()))
+            }
         }
 
         playerScores = s
