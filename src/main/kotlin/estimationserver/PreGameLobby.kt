@@ -21,12 +21,12 @@ class PreGameLobby (
         party.getPlayers().forEach { sendPlayerCurrentState(it) }
     }
 
-    override fun playerConnected(player: Player) {
+    override fun playerConnected (player: Player) {
         super.playerConnected(player)
         sendPlayerCurrentState(player)
     }
 
-    override fun receivedMessageFromPlayer(player: Player, message: String) {
+    override fun receivedMessageFromPlayer (player: Player, message: String) {
         val objectMapper = jacksonObjectMapper()
         try {
 
@@ -63,9 +63,7 @@ class PreGameLobby (
         val allPlayersReady = playersReady.size == party.numPlayers
         if (allPlayersReady && request.start) {
             party.removePartyListener(this)
-
-            // transition to the game
-
+            Game(estimation, party)
         } else {
             val objectMapper = jacksonObjectMapper()
             val error = ErrorResponse("Not all players are ready.")
