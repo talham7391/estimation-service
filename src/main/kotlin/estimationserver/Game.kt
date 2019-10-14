@@ -27,6 +27,7 @@ class Game (
         sendGameState(player) {
             applyIsGameDone()
             applyMyCards(player)
+            applyTurnOrder()
         }
     }
 
@@ -51,5 +52,18 @@ class Game (
         if (p != null) {
             myCards = p.getCardsInHand().map { SerializedCard(it.suit.name, it.rank.name) }.toSet()
         }
+    }
+
+    private fun GameStateResponse.applyTurnOrder () {
+        val players = Array<EstimationPlayer?>(4) { null }
+
+        estimation.playerGroup.players.map {
+            val p = it as? EstimationPlayer
+            if (p != null) {
+                players[it.getTurnIndex()] = p
+            }
+        }
+
+        turnOrder = players.filterNotNull().map { it.data }
     }
 }

@@ -1,6 +1,6 @@
 package estimationserver
 
-import talham7391.estimation.Player
+import estimationserver.party.Player
 
 data class GameStateResponse (
 
