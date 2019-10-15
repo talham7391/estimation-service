@@ -8,23 +8,23 @@ data class GameStateResponse (
 
     var myCards: Set<SerializedCard>? = null,
 
-    var playerCards: Set<PlayerCardsData>? = null,
+    var playerCards: Set<PlayerCardsData>? = null,      // TODO
 
-    var initialBids: Set<PlayerBidData>? = null,
+    var initialBids: Set<PlayerBidData>? = null,        // TODO | next
 
     var turnOf: Player? = null,
 
-    var phase: String? = null,
+    var phase: String? = null,                          // TODO | next
 
-    var finalBids: Set<PlayerBidData>? = null,
+    var finalBids: Set<PlayerBidData>? = null,          // TODO
 
-    var trumpSuit: String? = null,
+    var trumpSuit: String? = null,                      // TODO
 
-    var playerTricks: Set<PlayerTrickData>? = null,
+    var playerTricks: Set<PlayerTrickData>? = null,     // TODO
 
     var turnOrder: List<Player>? = null,
 
-    var currentTrick: Set<PlayData>? = null,
+    var currentTrick: Set<PlayData>? = null,            // TODO
 
     val type: String = "GAME_STATE"
 

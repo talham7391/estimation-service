@@ -7,7 +7,7 @@ import talham7391.estimation.Estimation
 
 class Game (
 
-    val estimation: Estimation,
+    private val estimation: Estimation,
 
     party: Party
 
@@ -28,6 +28,7 @@ class Game (
             applyIsGameDone()
             applyMyCards(player)
             applyTurnOrder()
+            applyTurnOf()
         }
     }
 
@@ -52,6 +53,11 @@ class Game (
         if (p != null) {
             myCards = p.getCardsInHand().map { SerializedCard(it.suit.name, it.rank.name) }.toSet()
         }
+    }
+
+    private fun GameStateResponse.applyTurnOf () {
+        val p = estimation.getPlayerWithTurn() as? EstimationPlayer
+        turnOf = party.getPlayers().find { it == p?.data }
     }
 
     private fun GameStateResponse.applyTurnOrder () {

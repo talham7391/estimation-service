@@ -37,6 +37,9 @@ class Lobby (
                     players[1],
                     players[2],
                     players[3]
+//                    talham7391.estimation.Player(),
+//                    talham7391.estimation.Player(),
+//                    talham7391.estimation.Player()
                 )
 
                 PreGameLobby(estimation, party)
