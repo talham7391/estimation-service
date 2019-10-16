@@ -10,15 +10,15 @@ data class GameStateResponse (
 
     var playerCards: Set<PlayerCardsData>? = null,      // TODO
 
-    var initialBids: Set<PlayerBidData>? = null,        // TODO | next
+    var initialBids: Set<PlayerBidData>? = null,
 
     var turnOf: Player? = null,
 
-    var phase: String? = null,                          // TODO | next
+    var phase: String? = null,
 
     var finalBids: Set<PlayerBidData>? = null,          // TODO
 
-    var trumpSuit: String? = null,                      // TODO
+    var trumpSuit: String? = null,                      // TODO | next
 
     var playerTricks: Set<PlayerTrickData>? = null,     // TODO
 
@@ -42,7 +42,7 @@ data class PlayerCardsData (
 
 data class PlayerBidData (
     val player: Player,
-    val bid: Int
+    val bid: String
 )
 
 data class PlayerTrickData (
