@@ -16,9 +16,9 @@ data class GameStateResponse (
 
     var phase: String? = null,
 
-    var finalBids: Set<PlayerBidData>? = null,          // TODO
+    var finalBids: Set<PlayerBidData>? = null,
 
-    var trumpSuit: String? = null,                      // TODO | next
+    var trumpSuit: String? = null,
 
     var playerTricks: Set<PlayerTrickData>? = null,     // TODO
 

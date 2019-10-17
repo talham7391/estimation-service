@@ -5,6 +5,8 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import estimationserver.party.Party
 import estimationserver.party.Player
 import talham7391.estimation.Estimation
+import talham7391.estimation.Suit
+import talham7391.estimation.TrumpSuitNotAvailable
 
 class Game (
 
@@ -35,9 +37,9 @@ class Game (
 
             when (request.type) {
 
-                "INITIAL_BID" -> {
-                    val r = objectMapper.readValue<InitialBidRequest>(message)
-                    handleInitialBidRequest(player, r)
+                "BID" -> {
+                    val r = objectMapper.readValue<BidRequest>(message)
+                    handleBidRequest(player, r)
                 }
 
                 "PASS" -> {
@@ -45,12 +47,17 @@ class Game (
                     handlePassRequest(player, r)
                 }
 
+                "DECLARE_TRUMP" -> {
+                    val r = objectMapper.readValue<DeclareTrumpRequest>(message)
+                    handleDeclareTrumpRequest(player, r)
+                }
+
             }
 
         } catch (e: Exception) {}
     }
 
-    private fun handleInitialBidRequest (player: Player, request: InitialBidRequest) {
+    private fun handleBidRequest (player: Player, request: BidRequest) {
         try {
             val p = estimation.getPlayerWithTurn() as? EstimationPlayer
             if (p?.data == player) {
@@ -70,6 +77,16 @@ class Game (
         sendPlayersIncrementalUpdate()
     }
 
+    private fun handleDeclareTrumpRequest (player: Player, request: DeclareTrumpRequest) {
+        try {
+            val p = estimation.getPlayerWithTurn() as? EstimationPlayer
+            if (p?.data == player) {
+                p.declareTrump(Suit.valueOf(request.suit))
+            }
+        } catch (e: Exception) {}
+        sendPlayersIncrementalUpdate()
+    }
+
     private fun sendPlayerCurrentState (player: Player) {
         sendGameState(player) {
             applyIsGameDone()
@@ -78,6 +95,8 @@ class Game (
             applyTurnOf()
             applyPhase()
             applyInitialBids()
+            applyTrumpSuit()
+            applyFinalBids()
         }
     }
 
@@ -87,8 +106,15 @@ class Game (
                 applyTurnOf()
                 applyPhase()
 
-                if (gamePhaseTracker.getPhase() == "INITIAL_BIDDING") {
-                    applyInitialBids()
+                when (gamePhaseTracker.getPhase()) {
+                    "INITIAL_BIDDING", "DECLARING_TRUMP" -> {
+                        applyInitialBids()
+                    }
+
+                    "FINAL_BIDDING" -> {
+                        applyTrumpSuit()
+                        applyFinalBids()
+                    }
                 }
             }
         }
@@ -148,6 +174,18 @@ class Game (
             }
         }
         initialBids = latestBids.map { (k, v) -> PlayerBidData(k, v) }.toSet()
+    }
+
+    private fun GameStateResponse.applyTrumpSuit () {
+        try {
+            trumpSuit = estimation.getTrumpSuit().name
+        } catch (e: TrumpSuitNotAvailable) {}
+    }
+
+    private fun GameStateResponse.applyFinalBids () {
+        finalBids = estimation.getPlayerBids().map { bid ->
+            PlayerBidData((bid.player as EstimationPlayer).data, "${bid.bid}")
+        }.toSet()
     }
 
     private fun cleanup () {
