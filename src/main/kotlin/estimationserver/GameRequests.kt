@@ -10,3 +10,5 @@ data class BidRequest (val type: String, val bid: Int)
 data class PassRequest (val type: String)
 
 data class DeclareTrumpRequest (val type: String, val suit: String)
+
+data class PlayCardRequest (val type: String, val suit: String, val rank: String)

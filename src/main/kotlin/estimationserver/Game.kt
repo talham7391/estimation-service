@@ -4,9 +4,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import estimationserver.party.Party
 import estimationserver.party.Player
-import talham7391.estimation.Estimation
-import talham7391.estimation.Suit
-import talham7391.estimation.TrumpSuitNotAvailable
+import talham7391.estimation.*
 
 class Game (
 
@@ -52,6 +50,11 @@ class Game (
                     handleDeclareTrumpRequest(player, r)
                 }
 
+                "PLAY_CARD" -> {
+                    val r = objectMapper.readValue<PlayCardRequest>(message)
+                    handlePlayCardRequest(player, r)
+                }
+
             }
 
         } catch (e: Exception) {}
@@ -87,9 +90,18 @@ class Game (
         sendPlayersIncrementalUpdate()
     }
 
+    private fun handlePlayCardRequest (player: Player, request: PlayCardRequest) {
+        try {
+            val p = estimation.getPlayerWithTurn() as? EstimationPlayer
+            if (p?.data == player) {
+                p.playCard(Card(Suit.valueOf(request.suit), Rank.valueOf(request.rank)))
+            }
+        } catch (e: Exception) {}
+        sendPlayersIncrementalUpdate()
+    }
+
     private fun sendPlayerCurrentState (player: Player) {
         sendGameState(player) {
-            applyIsGameDone()
             applyMyCards(player)
             applyTurnOrder()
             applyTurnOf()
@@ -97,6 +109,7 @@ class Game (
             applyInitialBids()
             applyTrumpSuit()
             applyFinalBids()
+            applyCurrentTrick()
         }
     }
 
@@ -115,6 +128,12 @@ class Game (
                         applyTrumpSuit()
                         applyFinalBids()
                     }
+
+                    else -> {
+                        applyFinalBids()
+                        applyMyCards(it)
+                        applyCurrentTrick()
+                    }
                 }
             }
         }
@@ -126,14 +145,6 @@ class Game (
 
         val objectMapper = jacksonObjectMapper()
         party.sendMessageToPlayer(player, objectMapper.writeValueAsString(gameState))
-    }
-
-    private fun GameStateResponse.applyIsGameDone () {
-        done = if (estimation.getPastTricks().isEmpty()) {
-            false
-        } else {
-            estimation.getPastTricks().size % 13 == 0
-        }
     }
 
     private fun GameStateResponse.applyMyCards (player: Player) {
@@ -183,9 +194,28 @@ class Game (
     }
 
     private fun GameStateResponse.applyFinalBids () {
-        finalBids = estimation.getPlayerBids().map { bid ->
-            PlayerBidData((bid.player as EstimationPlayer).data, "${bid.bid}")
+        finalBids = estimation.getPlayerBids().mapNotNull { bid ->
+            val p = bid.player as? EstimationPlayer
+            if (p != null) {
+                PlayerBidData(p.data, "${bid.bid}")
+            } else {
+                null
+            }
         }.toSet()
+    }
+
+    private fun GameStateResponse.applyCurrentTrick () {
+        currentTrick = estimation.getCurrentTrick()?.mapNotNull {
+            val p = it.player as? EstimationPlayer
+            if (p != null) {
+                PlayData(
+                    p.data,
+                    SerializedCard(it.card.suit.name, it.card.rank.name)
+                )
+            } else {
+                null
+            }
+        }?.toSet()
     }
 
     private fun cleanup () {

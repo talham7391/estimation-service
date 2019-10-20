@@ -4,6 +4,8 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import estimationserver.party.*
 import talham7391.estimation.Estimation
+import talham7391.estimation.GameDriver
+import talham7391.estimation.playAnyCardInHand
 
 class Lobby (
 
@@ -41,6 +43,11 @@ class Lobby (
 //                    talham7391.estimation.Player(),
 //                    talham7391.estimation.Player()
                 )
+//                val driver = GameDriver(estimation)
+//                driver.doInitialBidding()
+//                driver.doDeclaringTrump()
+//                driver.doFinalBidding()
+//                estimation.getPlayerWithTurn().playAnyCardInHand()
 
                 PreGameLobby(estimation, party)
 

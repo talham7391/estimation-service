@@ -4,8 +4,6 @@ import estimationserver.party.Player
 
 data class GameStateResponse (
 
-    var done: Boolean? = null,
-
     var myCards: Set<SerializedCard>? = null,
 
     var playerCards: Set<PlayerCardsData>? = null,      // TODO
@@ -24,7 +22,7 @@ data class GameStateResponse (
 
     var turnOrder: List<Player>? = null,
 
-    var currentTrick: Set<PlayData>? = null,            // TODO
+    var currentTrick: Set<PlayData>? = null,
 
     val type: String = "GAME_STATE"
 
