@@ -18,7 +18,7 @@ data class GameStateResponse (
 
     var trumpSuit: String? = null,
 
-    var playerTricks: Set<PlayerTrickData>? = null,     // TODO
+    var playerTricks: Set<PlayerTrickData>? = null,
 
     var turnOrder: List<Player>? = null,
 

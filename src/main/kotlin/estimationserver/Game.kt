@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import estimationserver.party.Party
 import estimationserver.party.Player
 import talham7391.estimation.*
+import talham7391.estimation.gamedata.getWinner
 
 class Game (
 
@@ -95,9 +96,14 @@ class Game (
             val p = estimation.getPlayerWithTurn() as? EstimationPlayer
             if (p?.data == player) {
                 p.playCard(Card(Suit.valueOf(request.suit), Rank.valueOf(request.rank)))
+                if (!estimation.getPastTricks().isEmpty() && estimation.getPastTricks().size % 13 == 0) {
+                    sendFinalUpdate()
+                    gotoPreGameLobby()
+                } else {
+                    sendPlayersIncrementalUpdate()
+                }
             }
         } catch (e: Exception) {}
-        sendPlayersIncrementalUpdate()
     }
 
     private fun sendPlayerCurrentState (player: Player) {
@@ -110,6 +116,7 @@ class Game (
             applyTrumpSuit()
             applyFinalBids()
             applyCurrentTrick()
+            applyPlayerTricks()
         }
     }
 
@@ -133,8 +140,32 @@ class Game (
                         applyFinalBids()
                         applyMyCards(it)
                         applyCurrentTrick()
+                        applyPlayerTricks()
                     }
                 }
+            }
+        }
+    }
+
+    private fun sendFinalUpdate () {
+        party.getPlayers().forEach {
+            sendGameState(it) {
+                myCards = emptySet()
+
+                val lastTrick = estimation.getPastTricks().last()
+                currentTrick = lastTrick.plays.mapNotNull { play ->
+                    val p = play.player as? EstimationPlayer
+                    if (p != null) {
+                        PlayData(
+                            p.data,
+                            SerializedCard(play.card.suit.name, play.card.rank.name)
+                        )
+                    } else {
+                        null
+                    }
+                }.toSet()
+
+                applyPlayerTricks()
             }
         }
     }
@@ -218,7 +249,27 @@ class Game (
         }?.toSet()
     }
 
-    private fun cleanup () {
+    private fun GameStateResponse.applyPlayerTricks () {
+        val numTricksInLatestGame = if (estimation.getPastTricks().size % 13 == 0)
+            13
+        else
+            estimation.getPastTricks().size % 13
+
+        val tricks = estimation.getPastTricks().takeLast(numTricksInLatestGame)
+        val numWon = mutableMapOf<Player, Int>()
+        party.getPlayers().forEach { numWon[it] = 0 }
+        tricks.forEach {
+            val p = it.getWinner() as? EstimationPlayer
+            if (p != null) {
+                numWon[p.data] = (numWon[p.data] ?: 0) + 1
+            }
+        }
+        playerTricks = numWon.map { (k, v) -> PlayerTrickData(k, v) }.toSet()
+    }
+
+    private fun gotoPreGameLobby () {
         estimation.removeTurnListener(gamePhaseTracker)
+        party.removePartyListener(this)
+        PreGameLobby(estimation, party)
     }
 }

@@ -6,7 +6,7 @@ import talham7391.estimation.gamedata.Play
 
 class GamePhaseTracker : TurnListener {
 
-    private var phase = "INITIAL_BIDDING"
+    private var phase = "TRICK_TAKING"
 
     override fun onPlayersTurnToDeclareTrump(player: Player) {
         phase = "DECLARING_TRUMP"
