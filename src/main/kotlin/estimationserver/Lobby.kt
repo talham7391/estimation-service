@@ -43,11 +43,11 @@ class Lobby (
 //                    talham7391.estimation.Player(),
 //                    talham7391.estimation.Player()
                 )
-                val driver = GameDriver(estimation)
-                driver.doInitialBidding()
-                driver.doDeclaringTrump()
-                driver.doFinalBidding()
-                repeat(12) { driver.doTrick() }
+//                val driver = GameDriver(estimation)
+//                driver.doInitialBidding()
+//                driver.doDeclaringTrump()
+//                driver.doFinalBidding()
+//                repeat(12) { driver.doTrick() }
 
                 PreGameLobby(estimation, party)
 

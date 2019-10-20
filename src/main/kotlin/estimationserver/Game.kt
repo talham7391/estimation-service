@@ -96,7 +96,7 @@ class Game (
             val p = estimation.getPlayerWithTurn() as? EstimationPlayer
             if (p?.data == player) {
                 p.playCard(Card(Suit.valueOf(request.suit), Rank.valueOf(request.rank)))
-                if (!estimation.getPastTricks().isEmpty() && estimation.getPastTricks().size % 13 == 0) {
+                if (estimation.getPastTricks().size % 13 == 0 && estimation.getCurrentTrick() == null) {
                     sendFinalUpdate()
                     gotoPreGameLobby()
                 } else {
