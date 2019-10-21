@@ -22,6 +22,8 @@ data class GameStateResponse (
 
     var turnOrder: List<Player>? = null,
 
+    var previousTrick: Set<PlayData>? = null,
+
     var currentTrick: Set<PlayData>? = null,
 
     val type: String = "GAME_STATE"

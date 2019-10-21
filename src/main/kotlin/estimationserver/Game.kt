@@ -96,7 +96,7 @@ class Game (
             val p = estimation.getPlayerWithTurn() as? EstimationPlayer
             if (p?.data == player) {
                 p.playCard(Card(Suit.valueOf(request.suit), Rank.valueOf(request.rank)))
-                if (estimation.getPastTricks().size % 13 == 0 && estimation.getCurrentTrick() == null) {
+                if (isGameDone()) {
                     sendFinalUpdate()
                     gotoPreGameLobby()
                 } else {
@@ -115,6 +115,7 @@ class Game (
             applyInitialBids()
             applyTrumpSuit()
             applyFinalBids()
+            applyPreviousTrick()
             applyCurrentTrick()
             applyPlayerTricks()
         }
@@ -139,6 +140,7 @@ class Game (
                     else -> {
                         applyFinalBids()
                         applyMyCards(it)
+                        applyPreviousTrick()
                         applyCurrentTrick()
                         applyPlayerTricks()
                     }
@@ -165,7 +167,18 @@ class Game (
                     }
                 }.toSet()
 
-                applyPlayerTricks()
+                val numTricksInLatestGame = 13
+
+                val tricks = estimation.getPastTricks().takeLast(numTricksInLatestGame)
+                val numWon = mutableMapOf<Player, Int>()
+                party.getPlayers().forEach { numWon[it] = 0 }
+                tricks.forEach {
+                    val p = it.getWinner() as? EstimationPlayer
+                    if (p != null) {
+                        numWon[p.data] = (numWon[p.data] ?: 0) + 1
+                    }
+                }
+                playerTricks = numWon.map { (k, v) -> PlayerTrickData(k, v) }.toSet()
             }
         }
     }
@@ -235,6 +248,25 @@ class Game (
         }.toSet()
     }
 
+    private fun GameStateResponse.applyPreviousTrick () {
+        val numTricksInGame = estimation.getPastTricks().size % 13
+        if (numTricksInGame == 0) {
+            previousTrick = emptySet()
+        } else {
+            previousTrick = estimation.getPastTricks().last().plays.mapNotNull {
+                val p = it.player as? EstimationPlayer
+                if (p != null) {
+                    PlayData(
+                        p.data,
+                        SerializedCard(it.card.suit.name, it.card.rank.name)
+                    )
+                } else {
+                    null
+                }
+            }.toSet()
+        }
+    }
+
     private fun GameStateResponse.applyCurrentTrick () {
         currentTrick = estimation.getCurrentTrick()?.mapNotNull {
             val p = it.player as? EstimationPlayer
@@ -250,10 +282,7 @@ class Game (
     }
 
     private fun GameStateResponse.applyPlayerTricks () {
-        val numTricksInLatestGame = if (estimation.getPastTricks().size % 13 == 0)
-            13
-        else
-            estimation.getPastTricks().size % 13
+        val numTricksInLatestGame = estimation.getPastTricks().size % 13
 
         val tricks = estimation.getPastTricks().takeLast(numTricksInLatestGame)
         val numWon = mutableMapOf<Player, Int>()
@@ -272,4 +301,6 @@ class Game (
         party.removePartyListener(this)
         PreGameLobby(estimation, party)
     }
+
+    private fun isGameDone () = estimation.getPastTricks().size % 13 == 0 && estimation.getCurrentTrick() == null
 }
