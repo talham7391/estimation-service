@@ -29,6 +29,10 @@ object PartyManager {
         return res.await()
     }
 
+    suspend fun deleteParty (partyId: String) {
+        actor.send(DeleteParty(partyId))
+    }
+
     fun CoroutineScope.partyManagerActor () : Channel<PartyManagerMessage> {
         val channel = Channel<PartyManagerMessage>()
         launch {
@@ -50,9 +54,28 @@ object PartyManager {
                         if (partyId == null) {
                             message.result.completeExceptionally(UnableToGeneratePartyId())
                         } else {
-                            parties[partyId] = PartyWrapper(Party(4))
+                            val party = Party(4)
+                            val mutex = Mutex()
+                            val partyWrapper = PartyWrapper(party, mutex)
+
+                            val deletionJob = PartyDeletionJob(
+                                partyId,
+                                party,
+                                mutex,
+                                10 * 1000
+                            )
+                            deletionJob.addListener(PartyDeletor())
+
+                            party.addPartyListener(deletionJob)
+
+                            parties[partyId] = partyWrapper
                             message.result.complete(partyId)
                         }
+                    }
+
+                    is DeleteParty -> {
+                        val partyId = message.id
+                        parties.remove(partyId)
                     }
 
                     is GetPartyIds -> {
@@ -83,6 +106,15 @@ data class PartyWrapper (
 )
 
 
+class PartyDeletor : PartyDeletionJobListener {
+
+    override fun shouldDeleteParty(partyId: String) {
+        GlobalScope.launch { PartyManager.deleteParty(partyId) }
+    }
+
+}
+
+
 sealed class PartyManagerMessage
 
 data class CreateParty (val result: CompletableDeferred<String>) : PartyManagerMessage()
@@ -90,6 +122,8 @@ data class CreateParty (val result: CompletableDeferred<String>) : PartyManagerM
 data class GetPartyIds (val result: CompletableDeferred<Set<String>>) : PartyManagerMessage()
 
 data class GetParty (val id: String, val result: CompletableDeferred<PartyWrapper>) : PartyManagerMessage()
+
+data class DeleteParty (val id: String) : PartyManagerMessage()
 
 
 class UnableToGeneratePartyId : Exception("Unable to generate party id.")
