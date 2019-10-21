@@ -234,6 +234,37 @@ class TestParty {
         party.sendMessageToPlayer(p1, "last")
         assertEquals(m1.lastMessageSent, "last")
     }
+
+    @Test fun testGetConnectedPlayers () {
+        val party = Party(3)
+
+        val p1 = Player("Bob")
+        val p2 = Player("John")
+        val p3 = Player("Joe")
+
+        assertEquals(0, party.getConnectedPlayers().size)
+
+        party.connectPlayer(p1, MockMessenger())
+        party.connectPlayer(p2, MockMessenger())
+
+        assertEquals(setOf(p1, p2), party.getConnectedPlayers())
+
+        party.disconnectPlayer(p1)
+
+        assertEquals(setOf(p2), party.getConnectedPlayers())
+
+        party.setRememberDisconnectedPlayers(true)
+
+        party.connectPlayer(p1, MockMessenger())
+        party.connectPlayer(p3, MockMessenger())
+
+        assertEquals(setOf(p1, p2, p3), party.getConnectedPlayers())
+
+        party.disconnectPlayer(p2)
+        party.disconnectPlayer(p3)
+
+        assertEquals(setOf(p1), party.getConnectedPlayers())
+    }
 }
 
 class LastMessageReceivedListener : BasePartyListener() {

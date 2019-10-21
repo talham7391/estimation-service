@@ -49,6 +49,10 @@ class Party (
         return players.keys
     }
 
+    fun getConnectedPlayers () : Set<Player> {
+        return players.filter { (_, v) -> v != null }.keys
+    }
+
     fun getRememberDisconnectedPlayers() : Boolean {
         return rememberDisconnectedPlayers
     }

@@ -103,7 +103,7 @@ class TestPreGameLobby {
         assertEquals(expected, actual)
     }
 
-    @Test fun testPlayerCannotSendStartIfLobbyIsNotAllReady () = setupPreGameLobby { party, p1, m1, p2, m2, p3, m3, p4, m4 ->
+    @Test fun testPlayerCannotSendStartIfLobbyIsNotAllReady () = setupPreGameLobby { party, p1, m1, p2, m2, p3, _, p4, _ ->
         val r = objectMapper.writeValueAsString(PlayerReadyRequest("PLAYER_READY", true))
         party.receiveMessageFromPlayer(p1, r)
         party.receiveMessageFromPlayer(p2, r)
