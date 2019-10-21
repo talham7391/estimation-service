@@ -1,15 +1,15 @@
 package estimationserver
 
-import estimationserver.party.BasePartyListener
 import estimationserver.party.Party
-import estimationserver.party.Player
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
+import org.slf4j.LoggerFactory
 import kotlin.random.Random
 
 object PartyManager {
     private val actor = GlobalScope.partyManagerActor()
+    private val logger = LoggerFactory.getLogger(PartyManager.javaClass)
 
     suspend fun createParty() : String {
         val res = CompletableDeferred<String>()
@@ -53,6 +53,7 @@ object PartyManager {
                         }
                         if (partyId == null) {
                             message.result.completeExceptionally(UnableToGeneratePartyId())
+                            logger.warn("Was not able to generate Party Id.")
                         } else {
                             val party = Party(4)
                             val mutex = Mutex()
@@ -70,12 +71,14 @@ object PartyManager {
 
                             parties[partyId] = partyWrapper
                             message.result.complete(partyId)
+                            logger.info("PartyId[$partyId] created.")
                         }
                     }
 
                     is DeleteParty -> {
                         val partyId = message.id
                         parties.remove(partyId)
+                        logger.info("PartyId[$partyId] deleted.")
                     }
 
                     is GetPartyIds -> {

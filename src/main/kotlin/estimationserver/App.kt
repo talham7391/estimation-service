@@ -4,12 +4,14 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import estimationserver.party.Player
 import io.ktor.application.Application
+import io.ktor.application.ApplicationCallPipeline
 import io.ktor.application.call
 import io.ktor.application.install
+import io.ktor.features.CallLogging
 import io.ktor.features.ContentNegotiation
+import io.ktor.features.callId
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.cio.websocket.readBytes
-import io.ktor.http.cio.websocket.send
 import io.ktor.jackson.jackson
 import io.ktor.response.respond
 import io.ktor.routing.get
@@ -18,11 +20,16 @@ import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.websocket.WebSockets
 import io.ktor.websocket.webSocket
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.onReceiveOrNull
-import kotlinx.coroutines.selects.select
+import org.slf4j.LoggerFactory
+import org.slf4j.event.Level
+import kotlin.random.Random
 
 fun Application.main () {
+    val logger = LoggerFactory.getLogger("App")
+
+    install(CallLogging) {
+        level = Level.INFO
+    }
     install(WebSockets)
     install(ContentNegotiation) {
         jackson {  }
@@ -54,8 +61,14 @@ fun Application.main () {
                 val partyId = call.parameters["partyId"]
                 partyId ?: return@webSocket
 
+                val callId = Random.nextInt(10_000_000)
+
+                logger.info("CallId[$callId] PartyId[$partyId] new connection.")
+
                 val objectMapper = jacksonObjectMapper()
                 val connectionId = objectMapper.readValue<ConnectionIdRequest>(incoming.receive().readBytes())
+
+                logger.info("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId]")
 
                 val player = Player(connectionId.connectionId)
                 val messenger = PlayerMessenger(outgoing)
@@ -64,7 +77,10 @@ fun Application.main () {
                 try {
                     partyWrapper.mutex.lock()
                     partyWrapper.party.connectPlayer(player, messenger)
+                    logger.info("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] connected.")
                 } catch (e: Exception) {
+                    logger.error("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] error.")
+                    e.printStackTrace()
                     throw e
                 } finally {
                     partyWrapper.mutex.unlock()
@@ -76,6 +92,8 @@ fun Application.main () {
                         partyWrapper.mutex.lock()
                         partyWrapper.party.receiveMessageFromPlayer(player, m)
                     } catch (e: Exception) {
+                        logger.error("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] error.")
+                        e.printStackTrace()
                         throw e
                     } finally {
                         partyWrapper.mutex.unlock()
@@ -85,7 +103,10 @@ fun Application.main () {
                 try {
                     partyWrapper.mutex.lock()
                     partyWrapper.party.disconnectPlayer(player)
+                    logger.info("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] disconnected.")
                 } catch (e: Exception) {
+                    logger.error("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] error.")
+                    e.printStackTrace()
                     throw e
                 } finally {
                     partyWrapper.mutex.unlock()
