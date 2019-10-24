@@ -234,7 +234,7 @@ class Game (
     private fun GameStateResponse.applyTrumpSuit () {
         try {
             trumpSuit = estimation.getTrumpSuit().name
-        } catch (e: TrumpSuitNotAvailable) {}
+        } catch (e: Exception) {}
     }
 
     private fun GameStateResponse.applyFinalBids () {

@@ -36,6 +36,9 @@ class Party (
     }
 
     fun disconnectPlayer (player: Player) {
+        if (player !in players) {
+            return
+        }
         if (rememberDisconnectedPlayers) {
             players[player] = null
         } else {

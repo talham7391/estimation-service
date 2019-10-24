@@ -74,23 +74,12 @@ fun Application.main () {
                 val messenger = PlayerMessenger(outgoing)
 
                 val partyWrapper = PartyManager.getParty(partyId)
-                try {
-                    partyWrapper.mutex.lock()
-                    partyWrapper.party.connectPlayer(player, messenger)
-                    logger.info("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] connected.")
-                } catch (e: Exception) {
-                    logger.error("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] error.")
-                    e.printStackTrace()
-                    throw e
-                } finally {
-                    partyWrapper.mutex.unlock()
-                }
 
-                for (message in incoming) {
-                    val m = String(message.readBytes())
+                try {
                     try {
                         partyWrapper.mutex.lock()
-                        partyWrapper.party.receiveMessageFromPlayer(player, m)
+                        partyWrapper.party.connectPlayer(player, messenger)
+                        logger.info("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] connected.")
                     } catch (e: Exception) {
                         logger.error("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] error.")
                         e.printStackTrace()
@@ -98,18 +87,34 @@ fun Application.main () {
                     } finally {
                         partyWrapper.mutex.unlock()
                     }
-                }
 
-                try {
-                    partyWrapper.mutex.lock()
-                    partyWrapper.party.disconnectPlayer(player)
-                    logger.info("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] disconnected.")
+                    for (message in incoming) {
+                        val m = String(message.readBytes())
+                        try {
+                            partyWrapper.mutex.lock()
+                            partyWrapper.party.receiveMessageFromPlayer(player, m)
+                        } catch (e: Exception) {
+                            logger.error("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] error.")
+                            e.printStackTrace()
+                            throw e
+                        } finally {
+                            partyWrapper.mutex.unlock()
+                        }
+                    }
                 } catch (e: Exception) {
-                    logger.error("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] error.")
-                    e.printStackTrace()
                     throw e
                 } finally {
-                    partyWrapper.mutex.unlock()
+                    try {
+                        partyWrapper.mutex.lock()
+                        partyWrapper.party.disconnectPlayer(player)
+                        logger.info("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] disconnected.")
+                    } catch (e: Exception) {
+                        logger.error("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] error.")
+                        e.printStackTrace()
+                        throw e
+                    } finally {
+                        partyWrapper.mutex.unlock()
+                    }
                 }
             }
         }
