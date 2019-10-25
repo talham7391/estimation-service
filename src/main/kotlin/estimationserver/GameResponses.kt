@@ -54,3 +54,10 @@ data class PlayData (
     val player: Player,
     val card: SerializedCard
 )
+
+data class BidEvent (
+    val bid: String,
+    val player: Player,
+    val type: String = "EVENT",
+    val eventType: String = "BID"
+)

@@ -4,12 +4,10 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import estimationserver.party.Player
 import io.ktor.application.Application
-import io.ktor.application.ApplicationCallPipeline
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.CallLogging
 import io.ktor.features.ContentNegotiation
-import io.ktor.features.callId
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.cio.websocket.readBytes
 import io.ktor.jackson.jackson
@@ -76,45 +74,43 @@ fun Application.main () {
                 val partyWrapper = PartyManager.getParty(partyId)
 
                 try {
-                    try {
-                        partyWrapper.mutex.lock()
-                        partyWrapper.party.connectPlayer(player, messenger)
-                        logger.info("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] connected.")
-                    } catch (e: Exception) {
-                        logger.error("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] error.")
-                        e.printStackTrace()
-                        throw e
-                    } finally {
-                        partyWrapper.mutex.unlock()
-                    }
-
-                    for (message in incoming) {
-                        val m = String(message.readBytes())
-                        try {
-                            partyWrapper.mutex.lock()
-                            partyWrapper.party.receiveMessageFromPlayer(player, m)
-                        } catch (e: Exception) {
-                            logger.error("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] error.")
-                            e.printStackTrace()
-                            throw e
-                        } finally {
-                            partyWrapper.mutex.unlock()
-                        }
-                    }
+                    partyWrapper.mutex.lock()
+                    partyWrapper.party.connectPlayer(player, messenger)
+                    logger.info("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] connected.")
                 } catch (e: Exception) {
+                    logger.error("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] error.")
+                    e.printStackTrace()
                     throw e
                 } finally {
+                    partyWrapper.mutex.unlock()
+                }
+
+                for (message in incoming) {
+                    val m = String(message.readBytes())
                     try {
                         partyWrapper.mutex.lock()
-                        partyWrapper.party.disconnectPlayer(player)
-                        logger.info("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] disconnected.")
+                        partyWrapper.party.receiveMessageFromPlayer(player, m)
                     } catch (e: Exception) {
+                        println("there was an error")
+                        partyWrapper.party.disconnectPlayer(player)
                         logger.error("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] error.")
                         e.printStackTrace()
                         throw e
                     } finally {
                         partyWrapper.mutex.unlock()
                     }
+                }
+
+                try {
+                    partyWrapper.mutex.lock()
+                    partyWrapper.party.disconnectPlayer(player)
+                    logger.info("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] disconnected.")
+                } catch (e: Exception) {
+                    logger.error("CallId[$callId] PartyId[$partyId] ConnectionId[$connectionId] error.")
+                    e.printStackTrace()
+                    throw e
+                } finally {
+                    partyWrapper.mutex.unlock()
                 }
             }
         }

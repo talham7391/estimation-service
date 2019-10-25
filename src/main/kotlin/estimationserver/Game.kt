@@ -4,6 +4,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import estimationserver.party.Party
 import estimationserver.party.Player
+import estimationserver.party.PlayerDisconnected
 import talham7391.estimation.*
 import talham7391.estimation.gamedata.getWinner
 
@@ -30,35 +31,32 @@ class Game (
 
     override fun receivedMessageFromPlayer (player: Player, message: String) {
         val objectMapper = jacksonObjectMapper()
-        try {
 
-            val request = objectMapper.readValue<BaseGameRequest>(message)
+        val request = objectMapper.readValue<BaseGameRequest>(message)
 
-            when (request.type) {
+        when (request.type) {
 
-                "BID" -> {
-                    val r = objectMapper.readValue<BidRequest>(message)
-                    handleBidRequest(player, r)
-                }
-
-                "PASS" -> {
-                    val r = objectMapper.readValue<PassRequest>(message)
-                    handlePassRequest(player, r)
-                }
-
-                "DECLARE_TRUMP" -> {
-                    val r = objectMapper.readValue<DeclareTrumpRequest>(message)
-                    handleDeclareTrumpRequest(player, r)
-                }
-
-                "PLAY_CARD" -> {
-                    val r = objectMapper.readValue<PlayCardRequest>(message)
-                    handlePlayCardRequest(player, r)
-                }
-
+            "BID" -> {
+                val r = objectMapper.readValue<BidRequest>(message)
+                handleBidRequest(player, r)
             }
 
-        } catch (e: Exception) {}
+            "PASS" -> {
+                val r = objectMapper.readValue<PassRequest>(message)
+                handlePassRequest(player, r)
+            }
+
+            "DECLARE_TRUMP" -> {
+                val r = objectMapper.readValue<DeclareTrumpRequest>(message)
+                handleDeclareTrumpRequest(player, r)
+            }
+
+            "PLAY_CARD" -> {
+                val r = objectMapper.readValue<PlayCardRequest>(message)
+                handlePlayCardRequest(player, r)
+            }
+
+        }
     }
 
     private fun handleBidRequest (player: Player, request: BidRequest) {
@@ -66,6 +64,9 @@ class Game (
             val p = estimation.getPlayerWithTurn() as? EstimationPlayer
             if (p?.data == player) {
                 p.bid(request.bid)
+
+                val objectMapper = jacksonObjectMapper()
+                party.broadcastMessage(objectMapper.writeValueAsString(BidEvent(request.bid.toString(), player)))
             }
         } catch (e: Exception) {}
         sendPlayersIncrementalUpdate()
@@ -76,6 +77,9 @@ class Game (
             val p = estimation.getPlayerWithTurn() as? EstimationPlayer
             if (p?.data == player) {
                 p.pass()
+
+                val objectMapper = jacksonObjectMapper()
+                party.broadcastMessage(objectMapper.writeValueAsString(BidEvent("pass", player)))
             }
         } catch (e: Exception) {}
         sendPlayersIncrementalUpdate()
@@ -103,7 +107,9 @@ class Game (
                     sendPlayersIncrementalUpdate()
                 }
             }
-        } catch (e: Exception) {}
+        } catch (e: Exception) {
+            println(e)
+        }
     }
 
     private fun sendPlayerCurrentState (player: Player) {
@@ -188,7 +194,9 @@ class Game (
         gameState.apply(config)
 
         val objectMapper = jacksonObjectMapper()
-        party.sendMessageToPlayer(player, objectMapper.writeValueAsString(gameState))
+        try {
+            party.sendMessageToPlayer(player, objectMapper.writeValueAsString(gameState))
+        } catch (e: PlayerDisconnected) {}
     }
 
     private fun GameStateResponse.applyMyCards (player: Player) {

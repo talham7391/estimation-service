@@ -21,7 +21,8 @@ open class Phase (
 
     private fun broadcastConnectedPlayers () {
         val objectMapper = jacksonObjectMapper()
-        party.broadcastMessage(objectMapper.writeValueAsString(ConnectedPlayersResponse(party.getPlayers())))
+        val connectedPlayers = party.getConnectedPlayers()
+        party.broadcastMessage(objectMapper.writeValueAsString(ConnectedPlayersResponse(connectedPlayers)))
     }
 
 }
