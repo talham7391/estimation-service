@@ -15,8 +15,9 @@ I developed an [estimation library](https://github.com/talham7391/estimation) wh
 3. `mkdir external`
 4. `cd external`
 5. `git clone git@github.com:talham7391/estimation.git`
-6. `cd ..`
-7. Run `./gradlew build` to make sure everything is working.
+6. Remove `version '1.3.20'` on line 9 of `build.gradle` to resolve version conflicts in the root project.
+7. `cd ..`
+8. Run `./gradlew build` to make sure everything is working.
 
 # Deployment
 
