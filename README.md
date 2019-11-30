@@ -18,8 +18,19 @@ I developed an [estimation library](https://github.com/talham7391/estimation) wh
 
 ### Setting up the VPS
 
-1. Provision a VPS (DigitalOcean Droplet, AWS EC2, etc...) & SSH into it.
-2.
+1. Provision a VPS (DigitalOcean Droplet, AWS EC2, etc...).
+1. Build a JAR and copy it to the VPS:
+	1. `./gradlew shadowJar`
+	2. `scp build/libs/estimationserver-all.jar <user>@<server_address>:<location>`
+	3. `ssh <user>@<server_address>:<location>`
+2. Run the following commands:
+    1. `sudo apt update -y`
+    2. `sudo apt install openjdk-8-jre -y`
+    3. Run `java -version` to verify java is installed.
+    4. `cd` to where you copied the JAR.
+    4. `java -jar estimationserver-all.jar`
+
+At this point, you should be able to reach the service at whatever hostname routes to your VPS. *Be mindful of which port the service is listening on.*
 
 # Local Dev
 
