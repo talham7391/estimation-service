@@ -1,8 +1,6 @@
-<br/>
 <div align="center">
 	<img src="https://i.imgur.com/vSYwhjO.png"/>
 </div>
-<br/>
 
 # Estimation Service
 
