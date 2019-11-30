@@ -1,51 +1,28 @@
+# Estimation Service
 
-# ktor-nginx  
+Mobile App: https://github.com/talham7391/estimation-godot
 
-A boilerplate project that can be easily deployed to AWS.  
-  
-## Infrastructure
+# Setup
 
-AWS ECS backed by a t2.micro instance (the type of instance and the number of instances backing the ECS cluster is configurable).
+I developed an [estimation library](https://github.com/talham7391/estimation) which this service uses to facilitate gameplay. Ideally this library should be published and included as a dependency, but as a quick work around for this project use the following steps to include it in the project:
 
-The main ktor app is launched in an ECS task and nginx is launched as a sidecar in the same task. All requests go through nginx.
+1. `git clone git@github.com:talham7391/estimation-service.git`
+2. `cd estimation-service`
+3. `mkdir external`
+4. `cd external`
+5. `git clone git@github.com:talham7391/estimation.git`
+6. `cd ..`
+7. Run `./gradlew build` to make sure everything is working.
 
-## Prerequisites 
+# Deployment
 
- - AWS CLI
- - Docker / Docker Hub
+### Setting up the VPS
 
-## Instructions
+1. Provision a VPS (DigitalOcean Droplet, AWS EC2, etc...) & SSH into it.
+2.
 
-1. Login to docker from terminal - `docker login`
-2. Configure AWS CLI - `aws configure`
-3. Fill in the variables in the Makefile:
-```
-DOCKER_ACC=
-APP_NAME=
-```
-4. Run `make eject project-name=my-project` to change names of folders/files.
-5. Start developing & deploying (See below)
+# Local Dev
 
-## Makefile
+1. `./gradlew run`
 
-**make start**<br/>
-Creates a local deployment on docker. App is available at `localhost:80` ie. `localhost`.
-
-**make stop**<br/>
-Stops the local deployment on docker.
-
-**make deploy**<br/>
-Deploys app to AWS. You must log in to AWS and get the IP of the EC2 instance to see the address of your deployment.
-
-**make serveraddy**<br/>
-Tells you the public ipv4 address of your deployment.
-
-**make teardown**<br/>
-Deletes deployment from AWS.
-
-**make eject project-name=my-project**<br/>
-Changes names of folders/files to match given project name.
-
-## Local Dev
-
-To develop locally without docker do `./gradlew run` to launch the server. Server is available at `localhost:8080`.
+The service will be reachable at `http://localhost:XXXX`.
